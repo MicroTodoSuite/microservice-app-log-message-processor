@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.0.0...v1.1.0) (2025-04-25)
+
+
+### Features
+
+* **pipeline:** add update of pipeline ([c37fbc6](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/c37fbc664286e23e4b539a2d31b4e61d0ddd5498))
+
 # 1.0.0 (2025-04-25)
 
 
