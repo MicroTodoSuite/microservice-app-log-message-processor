@@ -18,6 +18,7 @@ jobs:
       service-name: log-message-processor
       language: python
       sonar-project-key: MicroTodoSuite_log-message-processor
+      sonar-host-url: ${{ vars.SONAR_HOST_URL }}
     secrets: inherit
 
   release:
