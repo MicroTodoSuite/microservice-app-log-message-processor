@@ -1,23 +1,34 @@
-# Use Python 3.6 as the base image for building the application.
-# This image includes Python 3.6 and pip, which are necessary for running the application.
-FROM python:3.6
+# Build stage. Pinned Python, not the Python 3.6 EOL image used before.
+FROM python:3.11.10-slim-bookworm AS build
 
-# Set the working directory inside the container to /app
-# All subsequent commands will be run from this directory.
 WORKDIR /app
 
-# Copy the requirements.txt file into the /app directory in the container
-# This file contains the list of Python dependencies required by the application.
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 COPY requirements.txt requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install the Python dependencies specified in requirements.txt
-# This command uses pip to install the required packages into the container.
-RUN pip3 install -r requirements.txt
+# Runtime stage. Same base, only the venv and source, no pip cache or build tooling.
+FROM python:3.11.10-slim-bookworm AS runtime
 
-# Copy the entire contents of the current directory (the application's source code) into the /app directory in the container
-COPY . .
+RUN groupadd --gid 10001 logproc \
+    && useradd --uid 10001 --gid logproc --no-create-home --shell /usr/sbin/nologin logproc
 
-# Define the command to start the application
-# This command will be executed when the container starts.
-# It runs the `main.py` script using Python 3. The `-u` flag is used to run the Python interpreter in unbuffered mode, which can be useful for logging.
-CMD [ "python3", "-u", "main.py" ]
+WORKDIR /app
+
+COPY --from=build --chown=logproc:logproc /opt/venv /opt/venv
+COPY --chown=logproc:logproc . .
+
+ENV PATH="/opt/venv/bin:$PATH"
+
+USER 10001:10001
+
+# No EXPOSE: PORT has no default in application code (os.environ['PORT'], no fallback).
+
+# Pure-stdlib healthcheck: avoids installing curl/wget just for this.
+# hadolint ignore=DL3025
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD python3 -c "import os,urllib.request; urllib.request.urlopen('http://localhost:' + os.environ['PORT'] + '/metrics', timeout=2)" || exit 1
+
+CMD ["python3", "-u", "main.py"]
