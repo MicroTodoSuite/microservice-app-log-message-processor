@@ -1,34 +1,28 @@
-# Build stage. Pinned Python, not the Python 3.6 EOL image used before.
-FROM python:3.11.10-slim-bookworm AS build
+FROM python:3.13-slim-trixie@sha256:ffb752e139c0a19692a43af8d8523b274222dd68eebad5d583b45c2201c6e30a AS dependencies
 
-WORKDIR /app
+WORKDIR /src
+COPY requirements.txt ./
+RUN python -m pip install \
+      --disable-pip-version-check \
+      --no-cache-dir \
+      --no-compile \
+      --require-hashes \
+      --target /opt/runtime \
+      -r requirements.txt
 
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+FROM python:3.13-slim-trixie@sha256:ffb752e139c0a19692a43af8d8523b274222dd68eebad5d583b45c2201c6e30a
 
-COPY requirements.txt requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Runtime stage. Same base, only the venv and source, no pip cache or build tooling.
-FROM python:3.11.10-slim-bookworm AS runtime
-
-RUN groupadd --gid 10001 logproc \
+RUN python -m pip uninstall --yes msgpack setuptools wheel pip \
+    && groupadd --gid 10001 logproc \
     && useradd --uid 10001 --gid logproc --no-create-home --shell /usr/sbin/nologin logproc
 
 WORKDIR /app
+COPY --from=dependencies --chown=logproc:logproc /opt/runtime /opt/runtime
+COPY --chown=logproc:logproc main.py /app/main.py
 
-COPY --from=build --chown=logproc:logproc /opt/venv /opt/venv
-COPY --chown=logproc:logproc . .
-
-ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH=/opt/runtime \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 USER 10001:10001
-
-# No EXPOSE: PORT has no default in application code (os.environ['PORT'], no fallback).
-
-# Pure-stdlib healthcheck: avoids installing curl/wget just for this.
-# hadolint ignore=DL3025
-HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
-    CMD python3 -c "import os,urllib.request; urllib.request.urlopen('http://localhost:' + os.environ['PORT'] + '/metrics', timeout=2)" || exit 1
-
-CMD ["python3", "-u", "main.py"]
+CMD ["python3", "/app/main.py"]
