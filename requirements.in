@@ -1,0 +1,4 @@
+prometheus-client==0.26.0
+py-zipkin==1.2.8
+redis==8.1.0
+requests==2.34.2
