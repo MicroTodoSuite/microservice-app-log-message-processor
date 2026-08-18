@@ -1,0 +1,2 @@
+# Spectral ruleset for the log-message-processor AsyncAPI contract (spec 007).
+extends: ["spectral:asyncapi"]
