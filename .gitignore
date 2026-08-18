@@ -155,3 +155,8 @@ dist
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node,linux
+# Test/coverage artifacts (spec 006)
+coverage.xml
+.coverage
+.pytest_cache/
+__pycache__/

@@ -1,0 +1,5 @@
+# Trivy vulnerability exceptions (spec 006 / T002, FR-002).
+# Only upstream-UNFIXABLE findings, each justified and time-bounded. Never add a
+# fixable CVE here; remediate the dependency instead. log-message-processor
+# currently has ZERO exceptions: requirements.txt was pinned to redis 5.2.1,
+# prometheus_client 0.21.1, py_zipkin 1.2.8, requests 2.32.4. Keep empty of CVEs.

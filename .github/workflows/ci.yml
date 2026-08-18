@@ -19,6 +19,8 @@ jobs:
       language: python
       sonar-project-key: MicroTodoSuite_log-message-processor
       sonar-host-url: ${{ vars.SONAR_HOST_URL }}
+      # Unit gate active: ci/unit.sh runs pytest + coverage (spec 006 T016).
+      run-unit: true
     secrets: inherit
 
   release:

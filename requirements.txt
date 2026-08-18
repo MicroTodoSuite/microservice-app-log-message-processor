@@ -1,5 +1,4 @@
-redis==2.10.6
-prometheus_client
-py_zipkin
-requests
-cython
+redis==5.2.1
+prometheus_client==0.21.1
+py_zipkin==1.2.8
+requests==2.32.4

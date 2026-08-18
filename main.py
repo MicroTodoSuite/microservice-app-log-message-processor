@@ -1,27 +1,15 @@
-import time
 import redis
 import os
-import json
 import requests
 from py_zipkin.zipkin import zipkin_span, ZipkinAttrs, generate_random_64bit_string
-import random
 from prometheus_client import start_http_server, Counter, Histogram
+
+from processor import decode_message, has_trace, log_message
 
 # Prometheus metrics
 MESSAGE_PROCESSED = Counter('log_messages_processed_total', 'Total number of log messages processed')
 MESSAGE_FAILED = Counter('log_messages_failed_total', 'Total number of log messages failed')
 MESSAGE_PROCESSING_TIME = Histogram('log_message_processing_duration_seconds', 'Duration of message processing in seconds')
-
-def log_message(message):
-    """
-    Simulates processing of a log message by introducing a random delay and then printing the message.
-
-    Args:
-        message (str): The log message to be processed.
-    """
-    time_delay = random.randrange(0, 2000)  # Random delay between 0 and 2000 milliseconds
-    time.sleep(time_delay / 1000)  # Convert milliseconds to seconds
-    print(f'message received after waiting for {time_delay}ms: {message}')
 
 if __name__ == '__main__':
     # Start Prometheus HTTP server
@@ -53,14 +41,14 @@ if __name__ == '__main__':
     for item in pubsub.listen():
         try:
             # Decode and parse the message
-            message = json.loads(str(item['data'].decode("utf-8")))
+            message = decode_message(item['data'])
         except Exception as e:
             log_message(e)
             MESSAGE_FAILED.inc()
             continue
 
         # Check for Zipkin tracing data
-        if not zipkin_url or 'zipkinSpan' not in message:
+        if not has_trace(message, zipkin_url):
             log_message(message)
             MESSAGE_PROCESSED.inc()
             continue
