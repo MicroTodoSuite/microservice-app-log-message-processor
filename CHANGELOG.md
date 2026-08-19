@@ -1,3 +1,15 @@
+# [1.2.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.1.0...v1.2.0) (2026-08-19)
+
+
+### Bug Fixes
+
+* upgrade base image os packages to clear trivy high findings (util-linux cve-2026-53615) ([#8](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/8)) ([501d4e4](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/501d4e4e73ce0552322fb030c87285526d955c2d))
+
+
+### Features
+
+* initialize project specification and architecture constitution ([5d50871](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/5d50871d3b8f1d9f08c19e7f5869f6260c75c4f6))
+
 # [1.1.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.0.0...v1.1.0) (2025-04-25)
 
 
