@@ -12,6 +12,13 @@ RUN python -m pip install \
 
 FROM python:3.13-slim-trixie@sha256:ffb752e139c0a19692a43af8d8523b274222dd68eebad5d583b45c2201c6e30a
 
+# Patch OS packages to clear base-image HIGH/CRITICAL CVEs (e.g. util-linux
+# CVE-2026-53615, fixed in the Debian 13 point release). Keeps the image scan green.
+RUN apt-get update \
+    && apt-get -y upgrade \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN python -m pip uninstall --yes msgpack setuptools wheel pip \
     && groupadd --gid 10001 logproc \
     && useradd --uid 10001 --gid logproc --no-create-home --shell /usr/sbin/nologin logproc
