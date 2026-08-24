@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.2.0...v1.2.1) (2026-08-24)
+
+
+### Bug Fixes
+
+* **ci:** publish images to the migrated AWS account ([46c176e](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/46c176e4b2bf5a9032d4ac5a7964e1264865182b))
+
 # [1.2.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.1.0...v1.2.0) (2026-08-19)
 
 
