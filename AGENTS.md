@@ -29,6 +29,12 @@ It also serves Prometheus metrics and can forward trace spans to Zipkin when a m
 - Message processing intentionally sleeps for a random 0-1999 ms before logging to standard output.
 - Zipkin submission is optional and occurs only when `ZIPKIN_URL` is set and the message has a `zipkinSpan` field.
 - Node dependencies are used only for Semantic Release; application dependencies are managed with `requirements.txt`.
+- Open every pull request through `.github/pull_request_template.md` and follow `microservice-app-docs/docs/Pull request and task tracking conventions.md`: one concern per short-lived `<type>/<summary>` branch, a Conventional Commit title with a scope, and every template section filled. Constitution principle 13 makes this binding, not advisory.
+- Keep the Spec-Driven Development commit pair intact: `test(<scope>): specify ...` must be committed failing before `feat(<scope>): implement ...`. Never squash the pair; the failing-test commit is the evidence the cycle was followed.
+- Track every task. Name in the pull-request body the task IDs it advances, qualified by repository and spec, and update `tasks.md` in that same pull request rather than a follow-up. Mark a task `[X]` only after locating and inspecting its named artifact — never from a summary, a green check, a rendered manifest, or recollection. Annotate partial delivery instead of ticking it; work no register covers either gains a task or records in the PR body why none applies.
+- Reconcile, never quietly edit, when a register and reality disagree: a specification that pins a version nobody shipped is a maintainer decision, and `microservice-app-docs/full-platform/plan-reconciliation.md` is the worked example.
+- Never merge with `--admin`, force-push to `main`, disable a branch protection rule to land your own work, or approve your own pull request. As an AI agent you may open, describe, and update a pull request; you may never approve one and never author an acceptance or approval artifact — only a named human unlocks a gate.
+- Report outcomes faithfully in commits and pull-request bodies: name what is red, say what was skipped, and correct an earlier claim that turns out to be wrong rather than leaving the record wrong.
 
 ## Notes for the Kubernetes migration
 - The only exposed runtime port is the Prometheus HTTP server port from required `PORT`; the Dockerfile has no `EXPOSE`, and the code provides no default port.
