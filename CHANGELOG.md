@@ -1,3 +1,15 @@
+# [1.3.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.2.1...v1.3.0) (2026-09-09)
+
+
+### Bug Fixes
+
+* **ci:** target replacement AWS account ([d7c38e8](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/d7c38e822f6017d49a0ad2f81050ac1a8c0c5f35))
+
+
+### Features
+
+* **us3:** log-message-processor health, correlation, and Redis reconnection ([#13](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/13)) ([cf527ef](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/cf527eff0454351de81e549c5dbea9aba682a273))
+
 ## [1.2.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.2.0...v1.2.1) (2026-08-24)
 
 
