@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.3.0...v1.3.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **startup:** resolve runtime definitions before execution ([693a8a5](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/693a8a595f8e03ceb6babf12ec5afdf5a6ac47bc))
+
 # [1.3.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.2.1...v1.3.0) (2026-09-09)
 
 
