@@ -125,10 +125,6 @@ def run():
     )
 
 
-if __name__ == "__main__":
-    run()
-
-
 # --- health ---------------------------------------------------------------
 
 
@@ -360,3 +356,7 @@ def consume(
             return
 
         time.sleep(backoff(attempt))
+
+
+if __name__ == "__main__":
+    run()
