@@ -16,6 +16,9 @@ when the subscriber loop has silently stopped consuming.
 """
 
 import json
+import os
+import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -24,6 +27,31 @@ import urllib.request
 import pytest
 
 import main
+
+
+def test_script_entrypoint_resolves_all_runtime_definitions():
+    """The container executes ``main.py`` as a script, not as an import."""
+    environment = os.environ.copy()
+    environment.update({
+        "PORT": "0",
+        "REDIS_HOST": "127.0.0.1",
+        "REDIS_PORT": "1",
+        "REDIS_CHANNEL": "test",
+        "LOG_PROCESSOR_MAX_RECONNECTS": "0",
+    })
+
+    result = subprocess.run(
+        [sys.executable, "main.py"],
+        cwd=os.path.dirname(os.path.dirname(__file__)),
+        env=environment,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        universal_newlines=True,
+        timeout=10,
+    )
+
+    assert "NameError" not in result.stderr
+    assert "runtime_configuration" in result.stdout
 
 
 class FakeCounter:
