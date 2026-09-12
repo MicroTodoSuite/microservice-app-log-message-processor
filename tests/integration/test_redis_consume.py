@@ -51,7 +51,7 @@ def test_consumes_published_log_channel_event_over_real_redis():
 
         metrics = _Metrics()
         logged = []
-        main.process_item(item, "", metrics=metrics, logger=logged.append)
+        main.process_item(item, metrics=metrics, logger=logged.append)
 
         assert metrics.processed.count == 1
         assert metrics.failed.count == 0
