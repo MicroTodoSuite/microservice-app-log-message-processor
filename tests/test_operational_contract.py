@@ -260,7 +260,6 @@ def test_correlation_id_is_a_top_level_log_field(capsys):
 
     main.process_message(
         {"opName": "CREATE", "username": "alice", "todoId": 1, "correlationId": "abc-123"},
-        "",
         metrics=metrics,
         logger=main.log_message_structured,
     )
@@ -283,7 +282,6 @@ def test_message_without_correlation_id_still_processes():
 
     main.process_message(
         {"opName": "CREATE", "username": "alice", "todoId": 1},
-        "",
         metrics=metrics,
         logger=lambda message: None,
     )
