@@ -3,17 +3,18 @@ import os
 import random
 import threading
 import time
-from functools import partial
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import redis
-import requests
+from opentelemetry import propagate, trace
+from opentelemetry.trace import SpanKind, Status, StatusCode
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
-from py_zipkin.zipkin import ZipkinAttrs, generate_random_64bit_string, zipkin_span
 
 # Reconnection is normal operation for a pub/sub consumer, not an exceptional
 # condition: a broker restart must not end this process.
 MAX_RECONNECT_BACKOFF_SECONDS = 30
+
+SERVICE_NAME = "log-message-processor"
 
 
 class ProcessingMetrics:
@@ -37,57 +38,89 @@ def log_message(message, *, randrange=random.randrange, sleep=time.sleep):
     print(f"message received after waiting for {delay_ms}ms: {message}")
 
 
-def http_transport(encoded_span, zipkin_url, *, session=requests):
-    """Send one encoded span to the configured Zipkin endpoint."""
-    response = session.post(
-        zipkin_url,
-        data=encoded_span,
-        headers={"Content-Type": "application/x-thrift"},
-        timeout=5,
+# --- tracing (spec 010) ----------------------------------------------------
+
+
+def is_export_enabled(env=None):
+    """Trace export is on only when an OTLP endpoint is configured."""
+    env = os.environ if env is None else env
+    return bool(env.get("OTEL_EXPORTER_OTLP_ENDPOINT"))
+
+
+def configure_tracing(env=None):
+    """Install a tracer provider that exports over OTLP/gRPC, or nothing.
+
+    The exporter reads OTEL_EXPORTER_OTLP_ENDPOINT itself, and the batch
+    processor exports off the consuming thread, so an unreachable collector
+    costs spans and never a message. Without an endpoint the global tracer
+    stays a no-op.
+    """
+    env = os.environ if env is None else env
+    if not is_export_enabled(env):
+        return None
+
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+    from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+    provider = TracerProvider(
+        resource=Resource.create({"service.name": env.get("OTEL_SERVICE_NAME") or SERVICE_NAME})
     )
-    response.raise_for_status()
+    provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+    trace.set_tracer_provider(provider)
+    return provider
+
+
+def _trace_context(message):
+    """The W3C fields of the log_channel contract, when well-typed."""
+    if not isinstance(message, dict):
+        return {}
+    return {
+        field: message[field]
+        for field in ("traceparent", "tracestate")
+        if isinstance(message.get(field), str)
+    }
 
 
 def process_message(
     message,
-    zipkin_url,
     *,
+    channel="log_channel",
     metrics=METRICS,
     logger=log_message,
-    span_factory=zipkin_span,
-    transport=http_transport,
+    tracer=None,
 ):
-    """Process one decoded Redis event while preserving the pub/sub contract."""
-    if not zipkin_url or "zipkinSpan" not in message:
-        logger(message)
-        metrics.processed.inc()
-        return
+    """Process one decoded Redis event inside a CONSUMER span.
 
-    span_data = message["zipkinSpan"]
-    try:
-        with metrics.duration.time():
-            with span_factory(
-                service_name="log-message-processor",
-                zipkin_attrs=ZipkinAttrs(
-                    trace_id=span_data["_traceId"]["value"],
-                    span_id=generate_random_64bit_string(),
-                    parent_span_id=span_data["_spanId"],
-                    is_sampled=span_data["_sampled"]["value"],
-                    flags=None,
-                ),
-                span_name="save_log",
-                transport_handler=partial(transport, zipkin_url=zipkin_url),
-                sample_rate=100,
-            ):
+    The span continues the publisher's trace when the message carries W3C trace
+    context and starts a new trace when it does not; a missing, invalid, or
+    legacy field never stops the message from being logged.
+    """
+    tracer = tracer or trace.get_tracer(SERVICE_NAME)
+    with tracer.start_as_current_span(
+        f"{channel} process",
+        context=propagate.extract(_trace_context(message)),
+        kind=SpanKind.CONSUMER,
+        attributes={
+            "messaging.system": "redis",
+            "messaging.destination.name": channel,
+            "messaging.operation.type": "process",
+        },
+        record_exception=False,
+        set_status_on_exception=False,
+    ) as span:
+        try:
+            with metrics.duration.time():
                 logger(message)
-                metrics.processed.inc()
-    except Exception as exception:
-        print(f"did not send data to Zipkin: {exception}")
-        logger(message)
-        metrics.failed.inc()
+            metrics.processed.inc()
+        except Exception as exception:  # noqa: BLE001 - one bad message must not stop consumption
+            span.set_status(Status(StatusCode.ERROR, str(exception)))
+            print(json.dumps({"level": "error", "msg": "log_message_failed", "error": str(exception)}))
+            metrics.failed.inc()
 
 
-def process_item(item, zipkin_url, **kwargs):
+def process_item(item, **kwargs):
     """Decode one Redis item and account for malformed messages."""
     try:
         message = json.loads(item["data"].decode("utf-8"))
@@ -97,7 +130,7 @@ def process_item(item, zipkin_url, **kwargs):
         logger(exception)
         metrics.failed.inc()
         return
-    process_message(message, zipkin_url, **kwargs)
+    process_message(message, **kwargs)
 
 
 def run():
@@ -112,14 +145,13 @@ def run():
     redis_host = os.environ["REDIS_HOST"]
     redis_port = int(os.environ["REDIS_PORT"])
     redis_channel = os.environ["REDIS_CHANNEL"]
-    zipkin_url = os.environ.get("ZIPKIN_URL", "")
+    configure_tracing()
 
     print(json.dumps({"level": "info", "msg": "runtime_configuration", "config": config}))
 
     consume(
         pubsub_factory=lambda: redis.Redis(host=redis_host, port=redis_port, db=0).pubsub(),
         channel=redis_channel,
-        zipkin_url=zipkin_url,
         health=health,
         max_reconnects=config["redis"]["max_reconnects"],
     )
@@ -295,7 +327,6 @@ def consume(
     *,
     pubsub_factory,
     channel,
-    zipkin_url,
     handler=None,
     health=None,
     backoff=reconnect_backoff,
@@ -328,7 +359,7 @@ def consume(
                 # would let a broker that accepts subscriptions and immediately
                 # closes them spin forever at the shortest backoff.
                 consumed_anything = True
-                handler(item, zipkin_url)
+                handler(item, channel=channel)
         except Exception as exception:  # noqa: BLE001 - any broker error must retry
             health.set_ready(False)
             attempt = 0 if consumed_anything else attempt + 1
