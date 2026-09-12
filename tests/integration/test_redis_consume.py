@@ -1,6 +1,7 @@
 """Integration test (spec 007 / T015): exercises the real subscribe/consume path
 over a disposable Redis provided by Testcontainers. Requires Docker."""
 import json
+from contextlib import nullcontext
 
 import redis
 from testcontainers.redis import RedisContainer
@@ -16,10 +17,20 @@ class _Counter:
         self.count += 1
 
 
+class _Duration:
+    def __init__(self):
+        self.entries = 0
+
+    def time(self):
+        self.entries += 1
+        return nullcontext()
+
+
 class _Metrics:
     def __init__(self):
         self.processed = _Counter()
         self.failed = _Counter()
+        self.duration = _Duration()
 
 
 def _await_message(pubsub, timeout=5.0):
@@ -55,6 +66,7 @@ def test_consumes_published_log_channel_event_over_real_redis():
 
         assert metrics.processed.count == 1
         assert metrics.failed.count == 0
+        assert metrics.duration.entries == 1
         assert logged and logged[0]["opName"] == "CREATE"
         assert logged[0]["username"] == "alice"
 
