@@ -19,7 +19,7 @@ pip3 install -r requirements.txt
 REDIS_HOST=127.0.0.1 REDIS_PORT=6379 REDIS_CHANNEL=log_channel python3 main.py
 ```
 ## Dependencies
-Here you can find the software required to run this microservice, as well as the version we have tested.
+The software required to run this microservice, and the version that was tested:
 |  Dependency | Version  |
 |-------------|----------|
 | Redis       | 7.0      |
