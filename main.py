@@ -3,12 +3,16 @@ import os
 import random
 import threading
 import time
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import redis
 from opentelemetry import propagate, trace
 from opentelemetry.trace import SpanKind, Status, StatusCode
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
+from prometheus_client import CONTENT_TYPE_LATEST, CollectorRegistry, generate_latest
 
 # Reconnection is normal operation for a pub/sub consumer, not an exceptional
 # condition: a broker restart must not end this process.
@@ -24,10 +28,59 @@ class ProcessingMetrics:
         self.duration = duration
 
 
+# OpenTelemetry metrics (gitops spec 011). The OpenTelemetry Prometheus reader
+# writes into a registry of its own, so /metrics serves no process_ or python_
+# runtime series (FR-005); target_info and scope labels are off, so every series
+# keeps today's label set.
+# prometheus_client 0.26.0's DEFAULT_BUCKETS, preserved by spec 011 research R3.
+PROCESSING_DURATION_BOUNDARIES = (0.005, 0.01, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.5, 5.0, 7.5, 10.0)
+METRICS_REGISTRY = CollectorRegistry()
+_METER = MeterProvider(
+    metric_readers=[
+        PrometheusMetricReader(disable_target_info=True, scope_info_enabled=False, registry=METRICS_REGISTRY)
+    ],
+    views=[
+        View(
+            instrument_name="log_message_processing_duration_seconds",
+            aggregation=ExplicitBucketHistogramAggregation(boundaries=PROCESSING_DURATION_BOUNDARIES),
+        )
+    ],
+).get_meter(SERVICE_NAME)
+
+
+class _Counter:
+    """inc() over an OpenTelemetry counter, exposed at zero from the start: the
+    traffic recording rule adds the processed and failed rates, so a counter
+    that appeared only after its first increment would empty that signal."""
+
+    def __init__(self, name, description):
+        # The exporter appends _total to a monotonic counter.
+        self._counter = _METER.create_counter(name, description=description)
+        self._counter.add(0)
+
+    def inc(self):
+        self._counter.add(1)
+
+
+class _Duration:
+    """time() over an OpenTelemetry histogram, recording even when the body raises."""
+
+    def __init__(self, name, description):
+        self._histogram = _METER.create_histogram(name, description=description)
+
+    @contextmanager
+    def time(self):
+        started = time.perf_counter()
+        try:
+            yield
+        finally:
+            self._histogram.record(time.perf_counter() - started)
+
+
 METRICS = ProcessingMetrics(
-    Counter("log_messages_processed_total", "Total number of log messages processed"),
-    Counter("log_messages_failed_total", "Total number of log messages failed"),
-    Histogram("log_message_processing_duration_seconds", "Duration of message processing in seconds"),
+    _Counter("log_messages_processed", "Total number of log messages processed"),
+    _Counter("log_messages_failed", "Total number of log messages failed"),
+    _Duration("log_message_processing_duration_seconds", "Duration of message processing in seconds"),
 )
 
 
@@ -202,7 +255,7 @@ def _operational_handler(health):
 
         def do_GET(self):  # noqa: N802 - BaseHTTPRequestHandler API
             if self.path == "/metrics":
-                return self._respond(200, generate_latest(), CONTENT_TYPE_LATEST)
+                return self._respond(200, generate_latest(METRICS_REGISTRY), CONTENT_TYPE_LATEST)
 
             if self.path == "/health/startup":
                 ok = health.is_started()

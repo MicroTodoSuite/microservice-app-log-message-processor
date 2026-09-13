@@ -5,7 +5,7 @@ It also serves Prometheus metrics and records each message as an OpenTelemetry s
 ## Stack
 - Runtime: Python 3.6, verified by both `FROM python:3.6` and the README.
 - Framework: none; the service is a standalone Python script.
-- Runtime packages: `redis`, `prometheus-client`, and OpenTelemetry (`opentelemetry-api`, `opentelemetry-sdk`, and `opentelemetry-exporter-otlp-proto-grpc` 1.44.0), pinned in `requirements.in` and locked with hashes in `requirements.txt`.
+- Runtime packages: `redis`, `prometheus-client` (only to serve the OpenTelemetry Prometheus reader's registry), `opentelemetry-exporter-prometheus`, and OpenTelemetry (`opentelemetry-api`, `opentelemetry-sdk`, and `opentelemetry-exporter-otlp-proto-grpc` 1.44.0), pinned in `requirements.in` and locked with hashes in `requirements.txt`.
 - Release tooling: Node.js 22 in CI, with locked Semantic Release 24.2.3, `@semantic-release/changelog` 6.0.3, and `@semantic-release/git` 10.0.1.
 
 ## Commands
