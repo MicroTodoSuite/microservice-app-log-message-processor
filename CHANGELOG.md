@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.3.1...v1.4.0) (2026-09-13)
+
+
+### Features
+
+* **tracing:** trace log-message-processor through opentelemetry ([#23](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/23)) ([1aacb98](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/1aacb982d921e1cbc0f7e87818a4101f286221c1)), closes [MicroTodoSuite/microservice-app-todos-api#22](https://github.com/MicroTodoSuite/microservice-app-todos-api/issues/22) [#123](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/123) [MicroTodoSuite/microservice-app-todos-api#22](https://github.com/MicroTodoSuite/microservice-app-todos-api/issues/22)
+
 ## [1.3.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.3.0...v1.3.1) (2026-09-09)
 
 
