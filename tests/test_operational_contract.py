@@ -194,8 +194,7 @@ def test_subscriber_reconnects_instead_of_exiting():
     main.consume(
         pubsub_factory=lambda: pubsub,
         channel="log_channel",
-        zipkin_url="",
-        handler=lambda item, url, **kwargs: processed.append(item),
+        handler=lambda item, **kwargs: processed.append(item),
         health=main.HealthState(),
         backoff=lambda attempt: 0,
         max_reconnects=5,
@@ -242,8 +241,7 @@ def test_readiness_drops_while_disconnected_and_returns_after_reconnect():
     main.consume(
         pubsub_factory=lambda: pubsub,
         channel="log_channel",
-        zipkin_url="",
-        handler=lambda item, url, **kwargs: None,
+        handler=lambda item, **kwargs: None,
         health=health,
         backoff=lambda attempt: 0,
         max_reconnects=3,
@@ -262,7 +260,6 @@ def test_correlation_id_is_a_top_level_log_field(capsys):
 
     main.process_message(
         {"opName": "CREATE", "username": "alice", "todoId": 1, "correlationId": "abc-123"},
-        "",
         metrics=metrics,
         logger=main.log_message_structured,
     )
@@ -285,7 +282,6 @@ def test_message_without_correlation_id_still_processes():
 
     main.process_message(
         {"opName": "CREATE", "username": "alice", "todoId": 1},
-        "",
         metrics=metrics,
         logger=lambda message: None,
     )

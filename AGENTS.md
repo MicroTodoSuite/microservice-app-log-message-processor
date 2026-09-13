@@ -1,11 +1,11 @@
 ## Overview
 This Python service is a long-running Redis Pub/Sub consumer that parses JSON messages, waits for a randomized processing delay, and writes them to standard output.
-It also serves Prometheus metrics and can forward trace spans to Zipkin when a message contains tracing data and a Zipkin endpoint is configured.
+It also serves Prometheus metrics and records each message as an OpenTelemetry span, exported to Jaeger over OTLP, that continues the publisher's trace when the message carries W3C trace context.
 
 ## Stack
 - Runtime: Python 3.6, verified by both `FROM python:3.6` and the README.
 - Framework: none; the service is a standalone Python script.
-- Runtime packages: `redis==2.10.6`; `prometheus_client`, `py_zipkin`, `requests`, and `cython` are declared without versions.
+- Runtime packages: `redis`, `prometheus-client`, and OpenTelemetry (`opentelemetry-api`, `opentelemetry-sdk`, and `opentelemetry-exporter-otlp-proto-grpc` 1.44.0), pinned in `requirements.in` and locked with hashes in `requirements.txt`.
 - Release tooling: Node.js 22 in CI, with locked Semantic Release 24.2.3, `@semantic-release/changelog` 6.0.3, and `@semantic-release/git` 10.0.1.
 
 ## Commands
@@ -16,7 +16,7 @@ It also serves Prometheus metrics and can forward trace spans to Zipkin when a m
 - Test script: `npm test`; it runs `echo "Error: no test specified" && exit 1`. No test files or functional test command exist.
 
 ## Structure
-- `main.py`: application entrypoint, Redis subscription loop, metrics, message processing, and optional Zipkin transport.
+- `main.py`: application entrypoint, Redis subscription loop, metrics, message processing, and OpenTelemetry tracing.
 - `.github/workflows/`: Semantic Release automation and the current Azure Container Apps image build/deployment pipeline.
 - `requirements.txt`: Python runtime dependencies.
 - `package.json` and `package-lock.json`: Node-based release tooling; they do not define the application runtime.
@@ -27,7 +27,7 @@ It also serves Prometheus metrics and can forward trace spans to Zipkin when a m
 - The application is a single synchronous script, not an HTTP framework application; its only HTTP listener is the Prometheus server.
 - Redis database 0 and Pub/Sub are hard-coded; the host, port, and channel come from environment variables.
 - Message processing intentionally sleeps for a random 0-1999 ms before logging to standard output.
-- Zipkin submission is optional and occurs only when `ZIPKIN_URL` is set and the message has a `zipkinSpan` field.
+- Each message is processed inside a `CONSUMER` span; spans are exported only when `OTEL_EXPORTER_OTLP_ENDPOINT` is set, and a message without `traceparent` starts a new trace (`contracts/asyncapi.yaml`).
 - Node dependencies are used only for Semantic Release; application dependencies are managed with `requirements.txt`.
 - Write everything in English — branch names, commit messages, pull-request titles and bodies, review comments, code comments, documentation, and specification text. No bilingual sections. Changing this rule takes a recorded decision in `microservice-app-docs`, not a remark in conversation.
 - Open every pull request through `.github/pull_request_template.md` and follow `microservice-app-docs/docs/Pull request and task tracking conventions.md`: one concern per short-lived `<type>/<summary>` branch, a Conventional Commit title with a scope, and every template section filled. Constitution principle 13 makes this binding, not advisory.
@@ -39,9 +39,9 @@ It also serves Prometheus metrics and can forward trace spans to Zipkin when a m
 
 ## Notes for the Kubernetes migration
 - The only exposed runtime port is the Prometheus HTTP server port from required `PORT`; the Dockerfile has no `EXPOSE`, and the code provides no default port.
-- Required runtime variables are `PORT`, `REDIS_HOST`, `REDIS_PORT`, and `REDIS_CHANNEL`; `ZIPKIN_URL` is optional and defaults to disabled.
+- Required runtime variables are `PORT`, `REDIS_HOST`, `REDIS_PORT`, and `REDIS_CHANNEL`; `OTEL_EXPORTER_OTLP_ENDPOINT` is optional (unset disables trace export) and `OTEL_SERVICE_NAME` defaults to `log-message-processor`.
 - Redis is the required external service, using database 0 and the configured Pub/Sub channel. The README records Redis 7.0 as tested.
-- Zipkin is optional; spans are sent with an HTTP POST using `application/x-thrift`. No database or other outbound HTTP service is present.
+- Trace export is optional; spans are batched to the OTLP/gRPC collector. No database or other outbound HTTP service is present.
 - There is no health endpoint, Docker `HEALTHCHECK`, readiness check, or liveness check; Prometheus metrics alone do not verify the Redis subscription.
 - Review the Python 3.6 base image, mostly unpinned Python dependencies, root container user, broad `COPY . .`, and missing `.dockerignore` before producing the Kubernetes image.
 - The Azure workflow currently pushes release and `latest` tags to ACR, then runs `az containerapp update` and restarts a revision using Azure credentials, resource-group, and subscription secrets.
