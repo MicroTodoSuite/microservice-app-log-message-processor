@@ -9,6 +9,17 @@ The service scans environment for variables:
 - `REDIS_PORT` - port of Redis
 - `REDIS_CHANNEL` - channel the processor is going to listen to
 
+## Metrics
+
+Metrics are recorded through OpenTelemetry. An OpenTelemetry Prometheus reader
+writes into its own registry, which the operational server serves at
+`GET /metrics` on `PORT`, without scope labels, `target_info`, or `process_` and
+`python_` runtime metrics.
+
+- `log_messages_processed_total` - messages processed
+- `log_messages_failed_total` - messages that failed processing
+- `log_message_processing_duration_seconds` - processing duration histogram
+
 ## Building 
 
 ```
