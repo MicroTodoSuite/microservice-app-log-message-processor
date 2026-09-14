@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.5.0...v1.5.1) (2026-09-14)
+
+
+### Bug Fixes
+
+* **ci:** repoint to the latest .github reusable workflow refs ([#28](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/28)) ([6fe754d](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/6fe754d48e489fd8e2509210d7766379cd9c0e4a)), closes [#142](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/142) [#19](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/19)
+
 # [1.5.0](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.4.0...v1.5.0) (2026-09-13)
 
 
