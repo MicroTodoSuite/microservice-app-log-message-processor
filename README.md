@@ -37,4 +37,4 @@ The software required to run this microservice, and the version that was tested:
 | Python      | 3.6      |
 | Pip         | default  |
 
-`default` is the one comes with Python
+`default` is the one comes with Python<!-- test/gate-prod-notification-e2e: harmless trigger to verify the prod-environment gate now notifies Slack instead of pausing silently -->
