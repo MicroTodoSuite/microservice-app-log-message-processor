@@ -38,3 +38,4 @@ The software required to run this microservice, and the version that was tested:
 | Pip         | default  |
 
 `default` is the one comes with Python<!-- test/gate-prod-notification-e2e: harmless trigger to verify the prod-environment gate now notifies Slack instead of pausing silently -->
+<!-- test/gate-prod-notification-e2e retry: needs a release-worthy commit type for semantic-release to actually publish -->
