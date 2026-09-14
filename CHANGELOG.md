@@ -1,3 +1,10 @@
+## [1.5.2](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.5.1...v1.5.2) (2026-09-14)
+
+
+### Bug Fixes
+
+* **ci:** retry the prod gate notification test with a release-worthy commit ([#32](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/32)) ([442b6ce](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/442b6ceb5307af97cce1b3b02a8b820e25b09917)), closes [#31](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/31) [#31](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/31)
+
 ## [1.5.1](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.5.0...v1.5.1) (2026-09-14)
 
 
