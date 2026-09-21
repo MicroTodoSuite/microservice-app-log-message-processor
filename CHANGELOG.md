@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.5.2...v1.5.3) (2026-09-21)
+
+
+### Bug Fixes
+
+* **ci:** pin the promotion workflow past the conventions repair ([#33](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/33)) ([50e85be](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/commit/50e85be69cbc0c2c9d9354bea7b6b705678d4fa3)), closes [#191](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/191) [#192](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/192) [#193](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/193) [#195](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/195) [#196](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/196) [#198](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/issues/198) [MicroTodoSuite/microservice-app-gitops#205](https://github.com/MicroTodoSuite/microservice-app-gitops/issues/205)
+
 ## [1.5.2](https://github.com/MicroTodoSuite/microservice-app-log-message-processor/compare/v1.5.1...v1.5.2) (2026-09-14)
 
 
