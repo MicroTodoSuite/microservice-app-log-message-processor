@@ -39,3 +39,11 @@ The software required to run this microservice, and the version that was tested:
 
 `default` is the one comes with Python<!-- test/gate-prod-notification-e2e: harmless trigger to verify the prod-environment gate now notifies Slack instead of pausing silently -->
 <!-- test/gate-prod-notification-e2e retry: needs a release-worthy commit type for semantic-release to actually publish -->
+
+## License
+
+This service is derived from
+[elgris/microservice-app-example](https://github.com/elgris/microservice-app-example)
+by Ivan Kirichenko, which is distributed under the MIT License. The original
+copyright and permission notice is kept in [LICENSE](LICENSE), as that license
+requires.
